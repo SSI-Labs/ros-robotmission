@@ -18,3 +18,38 @@ Through intelligent navigation, robust part and color recognition, and collision
 4. Robot recognizes landing site and drops off object (color recognition)
   - The robot uses the yahboomcar_astra colorHSV ROS package that comes pre-installed to detect the red dropoffzone (a red folder against a wall), stops 0.2 meters from the folder, and turns the electomagnet off to drop the object.
   - The robot reverses for 1 second.
+
+
+INSTRUCTIONS TO SETUP AND RUN THE DOCKER CONTAINER
+# Allow Docker to connect to your display (ex. RealVNC)
+xhost +local:docker
+
+# Run the container with a custom name and image
+# Gives the container GPIO pin access, host display access, and mounts the X11 socket to talk to the host
+docker run -it --privileged \
+  --name my_robot_mission_container \
+  --device /dev/gpiochip0 \
+  --device /dev/gpiochip1 \
+  --device /dev/gpiochip2 \
+  --device /dev/gpiochip3 \
+  --device /dev/gpiochip4 \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+  my_robot_mission_image
+
+
+INSTRUCTIONS TO START THE MISSION
+- In three seperate terminals (all in the yahboomcar_ros2_ws/yahboomcar_ws directory) run the following commands:
+  Terminal 1
+    - ros2 run yahboomcar_astra colorHSV
+
+  Terminal 2
+    - colcon build --packages-select find_object_2d
+    - source install/setup.bash
+    - ros2 run find_object_2d find_object_2d image:=/image_raw --ros-args -p objects_path:=/root/yahboomcar_ros2_ws/yahboomcar_ws/src/find-object/objects
+
+  Terminal 3
+    - colcon build --packages-select pkg_robotmission_py
+    - source install/setup.bash
+    - ros2 run pkg_robotmission_py robotmission
+ 
