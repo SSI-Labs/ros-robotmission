@@ -20,12 +20,13 @@ Through intelligent navigation, robust part and color recognition, and collision
   - The robot reverses for 1 second.
 
 
-INSTRUCTIONS TO SETUP AND RUN THE DOCKER CONTAINER
-# Allow Docker to connect to your display (ex. RealVNC)
+# INSTRUCTIONS TO SETUP AND RUN THE DOCKER CONTAINER
+Allow Docker to connect to your display (ex. RealVNC)
 xhost +local:docker
 
-# Run the container with a custom name and image
-# Gives the container GPIO pin access, host display access, and mounts the X11 socket to talk to the host
+Run the container with a custom name and image
+Gives the container GPIO pin access, host display access, and mounts the X11 socket to talk to the host
+
 docker run -it --privileged \
   --name my_robot_mission_container \
   --device /dev/gpiochip0 \
@@ -38,7 +39,7 @@ docker run -it --privileged \
   my_robot_mission_image
 
 
-INSTRUCTIONS TO START THE MISSION
+# INSTRUCTIONS TO START THE MISSION
 - In three seperate terminals (all in the yahboomcar_ros2_ws/yahboomcar_ws directory) run the following commands:
   Terminal 1
     - ros2 run yahboomcar_astra colorHSV
