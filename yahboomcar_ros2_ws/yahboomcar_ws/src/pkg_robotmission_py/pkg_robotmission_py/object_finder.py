@@ -45,10 +45,10 @@ class ObjectFinder(Node):
         self.pub_Buzzer = self.create_publisher(UInt16, '/beep', 1)
 
         # State tracking
-        self.target_id = 7
+        self.target_id = 9
         self.detection_chunk_size = 12
         self.object_detected = False
-        self.safe_distance = 0.2  # meters (ADJUSTABLE)
+        self.safe_distance = 0.24  # meters (ADJUSTABLE)
         self.bridge = CvBridge()
         self.red_detected = False
         self.latest_front_distance = None  # Most recent front distance from LIDAR
@@ -98,10 +98,10 @@ class ObjectFinder(Node):
                 chunk = data[i:i+self.detection_chunk_size]
                 self.get_logger().info(f'Object chunk data: {chunk}')
 
-                obj_x = chunk[9]  # Horizontal pixel coordinate
+                obj_x = chunk[9] + 50 # Horizontal pixel coordinate
 
                 self.get_logger().info(f'Object {self.target_id} detected at x={obj_x:.1f}. Centering...')
-                self.move_towards_object(obj_x)
+                self.move_towards_object(obj_x, 0.13, 0.11)
                 break
 
         if not found:
@@ -166,37 +166,52 @@ class ObjectFinder(Node):
                 # Subscribe to image_raw to get camera image
                 if self.sub_camera is None:
                     self.sub_camera = self.create_subscription(Image, "/image_raw", self.process_camera_image, 2)
-                
+
+            elif self.red_detected and self.latest_front_distance < self.safe_distance:
+                stop_robot(self)
+                self.get_logger().info("At drop-off zone, releasing object.")
+                self.turn_magnet_off()
+                sleep(1)
+
+                # Backup 1 second to end mission
+                twist = Twist()
+                twist.linear.x = -0.15
+                self.cmd_vel_pub.publish(twist)
+                sleep(1.5)
+                stop_robot(self)
+                self.get_logger().info("Mission complete.")
+                self.destroy_node()
+
             else:
                 self.latest_front_distance = None
 
 
-    def move_towards_object(self, obj_x):
+    def move_towards_object(self, obj_x, forward_vel, turning_vel):
         twist = Twist()
-        image_center = 330  # Half of 640 px width
+        image_center = 320  # Half of 640 px width
         error_x = obj_x - image_center  # Positive if object is right of center
 
         # Proportional control gain for steering (ADJUSTABLE)
-        Kp_angular = 0.0033
+        Kp_angular = 0.0028
 
         # Deadband: if error is within this range, stop turning
-        deadband = 14  # pixels (ADJUSTABLE)
+        deadband = 12  # pixels (ADJUSTABLE)
         
         # Adjust angular velocity based on the deadband
         if abs(error_x) > deadband:
             twist.angular.z = -Kp_angular * error_x
             # Keep a base forward speed while turning
-            twist.linear.x = 0.11
+            twist.linear.x = turning_vel
         else:
             # If within the deadband, stop turning and move straight
             twist.angular.z = 0.0
             # Increase forward speed to move more confidently in a straight line
-            twist.linear.x = 0.13
+            twist.linear.x = forward_vel
 
         self.cmd_vel_pub.publish(twist)
         
     
-    '''def process_camera_image(self, image_data):
+    def process_camera_image(self, image_data):
         print('Processing camera image...')
         if not isinstance(image_data, Image):
             return
@@ -215,15 +230,22 @@ class ObjectFinder(Node):
             mask = cv2.bitwise_or(mask1, mask2)
 
             red_pixels = cv2.countNonZero(mask)
-            self.red_detected = red_pixels > 500
+            self.red_detected = red_pixels > 350
 
             if self.red_detected:
                 print("Red detected in camera image.")
-                self.turn_magnet_off()
+                '''self.turn_magnet_off()
                 print("BEEP")
                 beep = UInt16()
                 beep.data = 1
-                self.pub_Buzzer.publish(beep)
+                self.pub_Buzzer.publish(beep)'''
+                # Find contours to get center x-position
+                contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                if contours:
+                    largest = max(contours, key=cv2.contourArea)
+                    x, y, w, h = cv2.boundingRect(largest)
+                    obj_x = x + w / 2
+                    self.move_towards_object(obj_x, 0.2, 0.14)
             else:
                 print("No red!")
                 beep = UInt16()
@@ -231,20 +253,6 @@ class ObjectFinder(Node):
                 self.pub_Buzzer.publish(beep)
         except Exception as e:
             self.get_logger().error(f"Error processing camera image: {e}")
-'''
-    
-    # IF RED IS SPOTTED, CALL THIS METHOD    
-    def dropoff_zone(self):
-        # go towards the red sign, use LIDAR to stop a certain distance away from it
-        # release the elctromagnet to drop object
-        # retreat by backing up a few inches
-        self.get_logger().info("Checking for red dropoff zone...")
-
-        if self.red_detected:
-            self.get_logger().info("Red detected. Turning off electromagnet.")
-            self.turn_magnet_off()
-        else:
-            self.get_logger().warn("Red not detected. Holding object.")
 
     
     def turn_magnet_on(self):
