@@ -38,6 +38,8 @@ docker run -it --privileged \
   -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
   my_robot_mission_image
 
+# INSTALLS
+apt-get update && apt-get install -y     python3-pip     python3-lgpio     python3-pigpio     python3-rpi.gpio     && rm -rf /var/lib/apt/lists/*
 
 # INSTRUCTIONS TO START THE MISSION
 - In three seperate terminals (all in the yahboomcar_ros2_ws/yahboomcar_ws directory) run the following commands:
