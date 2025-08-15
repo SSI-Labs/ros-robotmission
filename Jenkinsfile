@@ -4,9 +4,9 @@
 
 pipeline {
     // The agent directive specifies the Jenkins agent to use.
-    // 'pylint-vm' is the label you assigned to your virtual machine node.
+    // 'pylint-vm-1' is the label you assigned to your virtual machine node.
     agent {
-        label 'pylint-vm'
+        label 'pylint-vm-1'
     }
 
     // The stages block contains all the steps of the pipeline.
@@ -46,7 +46,7 @@ pipeline {
                     body: "The Pylint analysis has completed. The report is attached.",
                     attachLog: true,
                     compressLog: false,
-                    to: 'hwojack@systemxi.com',
+                    to: 'hwojack@systemxi.com', // ** Replace with your email address **
                     attachmentsPattern: 'pylint_report.txt'
                 )
             }
