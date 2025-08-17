@@ -197,15 +197,13 @@ class ObjectFinder(Node):
         # Deadband: if error is within this range, stop turning
         deadband = 12  # pixels (ADJUSTABLE)
         
-        # Adjust angular velocity based on the deadband
+        # angular velocity based on deadband
         if abs(error_x) > deadband:
             twist.angular.z = -Kp_angular * error_x
-            # Keep a base forward speed while turning
             twist.linear.x = turning_vel
         else:
-            # If within the deadband, stop turning and move straight
+            # If within deadband, stop turning and move straight
             twist.angular.z = 0.0
-            # Increase forward speed to move more confidently in a straight line
             twist.linear.x = forward_vel
 
         self.cmd_vel_pub.publish(twist)
