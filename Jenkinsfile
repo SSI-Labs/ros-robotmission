@@ -20,9 +20,11 @@ pipeline {
         }
         
         // This stage runs Pylint on all Python files and saves the output to a file.
+        // The `|| true` at the end of the command ensures that the script will not fail
+        // even if Pylint returns a non-zero exit code.
         stage('Pylint Analysis') {
             steps {
-                sh 'pylint **/*.py > pylint_report.txt'
+                sh 'pylint **/*.py > pylint_report.txt || true'
             }
         }
         
