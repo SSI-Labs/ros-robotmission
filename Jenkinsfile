@@ -4,7 +4,7 @@
 pipeline {
     // The agent directive specifies the Jenkins agent to use.
     agent {
-        label 'pylint-vm'
+        label 'pylint-vm-1'
     }
 
     // The stages block contains all the steps of the pipeline.
