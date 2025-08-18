@@ -49,7 +49,7 @@ pipeline {
                     body: "The Pylint analysis has completed. The report is attached.",
                     attachLog: true,
                     compressLog: false,
-                    to: 'your-email@example.com',
+                    to: 'hwojack@systemxi.com',
                     attachmentsPattern: 'pylint_report.txt'
                 )
             }
